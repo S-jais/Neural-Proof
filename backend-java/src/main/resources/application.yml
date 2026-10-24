@@ -1,0 +1,60 @@
+server:
+  port: 8080
+  shutdown: graceful
+
+spring:
+  application:
+    name: neural-proof-backend
+
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/neural_proof}
+    username: ${DATABASE_USERNAME:neural}
+    password: ${DATABASE_PASSWORD:proof_secret}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 5000
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+  task:
+    execution:
+      pool:
+        core-size: 4
+        max-size: 8
+        queue-capacity: 100
+      thread-name-prefix: neural-proof-exec-
+
+neural-proof:
+  python-backend-url: ${PYTHON_BACKEND_URL:http://localhost:8000}
+  internal-service-token: ${INTERNAL_SERVICE_TOKEN:change-me-to-a-random-secret}
+  frontend-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
+  limits:
+    min-chars-answer: 40
+    max-chars-answer: 12000
+    min-chars-question: 10
+    max-chars-question: 1000
+    max-chars-context: 600
+    max-claims-per-run: 12
+    run-total-timeout-seconds: 480
+    claim-concurrency: 3
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized

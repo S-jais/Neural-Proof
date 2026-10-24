@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:neural_proof;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    generate-ddl: true
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: create
+    show-sql: false
+  flyway:
+    enabled: false

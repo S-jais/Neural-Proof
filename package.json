@@ -1,0 +1,19 @@
+{
+  "name": "neural-proof",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Neural Proof - Evidence-Checking AI Assistant",
+  "scripts": {
+    "dev": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "preview": "npm run preview --prefix frontend"
+  },
+  "keywords": [
+    "ai",
+    "evidence-checking",
+    "fact-checking",
+    "tinyfish"
+  ],
+  "author": "",
+  "license": "MIT"
+}

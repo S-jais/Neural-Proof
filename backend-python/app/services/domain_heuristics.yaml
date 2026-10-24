@@ -1,0 +1,99 @@
+# Domain and TLD Authority Patterns for Source Ranking
+# Editable configuration - contextual to claim type
+
+tlds:
+  official_government:
+    - ".gov"
+    - ".gov.uk"
+    - ".gov.au"
+    - ".gov.in"
+    - ".gov.ca"
+    - ".mil"
+    - ".fed.us"
+  
+  intergovernmental_or_standards:
+    - ".int"
+    - ".org" # subject to domain matching below
+
+  primary_research_or_dataset:
+    - ".edu"
+    - ".ac.uk"
+    - ".edu.au"
+    - ".edu.in"
+
+known_domains:
+  official_government:
+    - "nasa.gov"
+    - "cdc.gov"
+    - "nih.gov"
+    - "who.int"
+    - "fda.gov"
+    - "epa.gov"
+    - "nrel.gov"
+    - "noaa.gov"
+    - "usda.gov"
+    - "sec.gov"
+    - "whitehouse.gov"
+    - "gov.uk"
+    - "europa.eu"
+
+  intergovernmental_or_standards:
+    - "un.org"
+    - "unesco.org"
+    - "wto.org"
+    - "iso.org"
+    - "ieee.org"
+    - "worldbank.org"
+    - "imf.org"
+    - "ipcc.ch"
+    - "wmo.int"
+    - "oecd.org"
+
+  primary_research_or_dataset:
+    - "nature.com"
+    - "science.org"
+    - "cell.com"
+    - "thelancet.com"
+    - "pnas.org"
+    - "arxiv.org"
+    - "ncbi.nlm.nih.gov"
+    - "pubmed.ncbi.nlm.nih.gov"
+    - "biorxiv.org"
+    - "sciencedirect.com"
+    - "springer.com"
+    - "jamanetwork.com"
+    - "nejm.org"
+
+  official_documentation:
+    - "developer.mozilla.org"
+    - "docs.python.org"
+    - "docs.oracle.com"
+    - "learn.microsoft.com"
+    - "docs.github.com"
+    - "docs.aws.amazon.com"
+    - "cloud.google.com/docs"
+
+  established_news:
+    - "reuters.com"
+    - "apnews.com"
+    - "bbc.com"
+    - "bbc.co.uk"
+    - "nytimes.com"
+    - "wsj.com"
+    - "ft.com"
+    - "theguardian.com"
+    - "bloomberg.com"
+    - "economist.com"
+    - "npr.org"
+
+  low_quality_or_unknown:
+    - "wikipedia.org" # encyclopedic, useful as starting point but secondary
+    - "reddit.com"
+    - "quora.com"
+    - "twitter.com"
+    - "x.com"
+    - "facebook.com"
+    - "medium.com"
+    - "substack.com"
+    - "buzzfeed.com"
+    - "pinterest.com"
