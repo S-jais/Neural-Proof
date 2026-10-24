@@ -10,6 +10,9 @@ interface ClaimItem {
 
 interface AssistantAnswer {
   who: string;
+  featureTag: string;
+  featureDesc: string;
+  targetSampleIndex: number;
   segs: Array<[ 't', string ] | [ 'c', number, string ]>;
   claims: ClaimItem[];
 }
@@ -17,6 +20,9 @@ interface AssistantAnswer {
 const ANSWERS: AssistantAnswer[] = [
   {
     who: 'Chat assistant',
+    featureTag: 'Conversational Fact-Checking • Multi-Claim Extraction',
+    featureDesc: 'Decomposes conversational answers from ChatGPT/Claude into individual factual assertions and verifies each separately.',
+    targetSampleIndex: 1,
     segs: [
       ['t', 'The James Webb Space Telescope '],
       ['c', 0, 'launched on December 25, 2021'],
@@ -34,6 +40,9 @@ const ANSWERS: AssistantAnswer[] = [
   },
   {
     who: 'Search assistant',
+    featureTag: 'AI Search Overview • Live Web Citation Grounding',
+    featureDesc: 'Checks synthesized search results (Perplexity, Google AI Overviews) against live web crawl pages via TinyFish.',
+    targetSampleIndex: 1,
     segs: [
       ['t', 'Mount Everest is '],
       ['c', 0, 'about 8,849 metres tall'],
@@ -45,12 +54,15 @@ const ANSWERS: AssistantAnswer[] = [
     ],
     claims: [
       { v: 'ok', label: 'Everest is about 8,849 metres tall', why: 'The 2020 China and Nepal survey gives 8,848.86 m.', src: ['britannica.com', 'nationalgeographic.com'] },
-      { v: 'bad', label: 'Great Wall is visible from space by eye', why: 'Astronauts report it is not visible unaided from orbit.', src: ['nasa.gov', 'esa.int'] },
-      { v: 'ok', label: 'Shark skeletons are cartilage', why: 'Sharks are cartilaginous fish with no true bone.', src: ['britannica.com', 'si.edu'] }
+      { v: 'bad', label: 'Great Wall is visible from space by eye', why: 'Astronauts and orbital imagery confirm it is not visible unaided from low Earth orbit.', src: ['nasa.gov', 'esa.int'] },
+      { v: 'ok', label: 'Shark skeletons are cartilage', why: 'Sharks are cartilaginous fish with no true bone tissue.', src: ['britannica.com', 'si.edu'] }
     ]
   },
   {
     who: 'Writing assistant',
+    featureTag: 'Editorial Prose • Myth & Absolute Claim Detection',
+    featureDesc: 'Audits draft articles, essays, and reports for popular internet myths and overconfident absolute claims.',
+    targetSampleIndex: 0,
     segs: [
       ['c', 0, 'Humans use only 10% of their brains'],
       ['t', ', and '],
@@ -60,9 +72,9 @@ const ANSWERS: AssistantAnswer[] = [
       ['t', '.']
     ],
     claims: [
-      { v: 'bad', label: 'Humans use only 10% of their brains', why: 'Imaging shows activity across nearly the whole brain.', src: ['nih.gov', 'scientificamerican.com'] },
-      { v: 'mid', label: 'Vitamin C prevents the common cold', why: 'Trials show no prevention in most people, only a slight shortening.', src: ['cochranelibrary.com', 'nih.gov'] },
-      { v: 'ok', label: 'Water boils at 100 °C at sea level', why: 'Standard pressure sets the boiling point at 100 °C.', src: ['nist.gov', 'britannica.com'] }
+      { v: 'bad', label: 'Humans use only 10% of their brains', why: 'Neuroimaging shows active metabolic processes across virtually the entire brain.', src: ['nih.gov', 'scientificamerican.com'] },
+      { v: 'mid', label: 'Vitamin C prevents the common cold', why: 'Clinical trials show no preventative effect in the general population, only a slight symptom duration shortening.', src: ['cochranelibrary.com', 'nih.gov'] },
+      { v: 'ok', label: 'Water boils at 100 °C at sea level', why: 'Standard 1 atmosphere pressure sets the boiling point of pure water at 100 °C.', src: ['nist.gov', 'britannica.com'] }
     ]
   }
 ];
@@ -97,6 +109,22 @@ export const LandingPage: React.FC = () => {
       if (!pausedRef.current && inViewRef.current && !document.hidden) {
         elapsed += 25;
       }
+    }
+  };
+
+  const clearTheatre = () => {
+    if (theatreRef.current) {
+      theatreRef.current.querySelectorAll('.packet').forEach(p => p.remove());
+    }
+    if (stageRef.current) {
+      stageRef.current.getAnimations().forEach(a => a.cancel());
+      stageRef.current.style.opacity = '1';
+      stageRef.current.style.transform = 'none';
+    }
+    if (beamRef.current) {
+      beamRef.current.getAnimations().forEach(a => a.cancel());
+      beamRef.current.style.opacity = '0';
+      beamRef.current.style.top = '0%';
     }
   };
 
@@ -216,6 +244,7 @@ export const LandingPage: React.FC = () => {
   };
 
   const playAnswer = async (k: number, myRunId: number) => {
+    clearTheatre();
     const ans = ANSWERS[k];
     setActiveAsst(k);
     const countsAcc = { c: 0, s: 0, v: 0 };
@@ -228,6 +257,8 @@ export const LandingPage: React.FC = () => {
     setLiveText('Typing');
 
     if (stageRef.current) {
+      stageRef.current.style.opacity = '1';
+      stageRef.current.style.transform = 'none';
       stageRef.current.animate(
         [{ opacity: 0, transform: 'translateX(28px)' }, { opacity: 1, transform: 'none' }],
         { duration: 520, easing: 'cubic-bezier(.2,.7,.2,1)' }
@@ -287,15 +318,18 @@ export const LandingPage: React.FC = () => {
     await wait(3800, myRunId);
 
     if (stageRef.current) {
-      await stageRef.current.animate(
+      const exitAnim = stageRef.current.animate(
         [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(-28px)' }],
-        { duration: 420, easing: 'ease-in', fill: 'forwards' }
-      ).finished;
+        { duration: 420, easing: 'ease-in' }
+      );
+      await exitAnim.finished.catch(() => {});
+      if (myRunId !== runIdRef.current) throw new Error('CANCEL');
     }
   };
 
   const fillFinal = (k: number) => {
     runIdRef.current++;
+    clearTheatre();
     const ans = ANSWERS[k];
     setActiveAsst(k);
     buildDoc(ans);
@@ -325,6 +359,7 @@ export const LandingPage: React.FC = () => {
 
   const startLoop = (k = 0) => {
     const myRunId = ++runIdRef.current;
+    clearTheatre();
     (async () => {
       let i = k;
       try {
@@ -402,6 +437,8 @@ export const LandingPage: React.FC = () => {
     }
   };
 
+  const currentAnswer = ANSWERS[activeAsst] || ANSWERS[0];
+
   return (
     <div className="view" data-view="home">
       {/* Hero band */}
@@ -455,6 +492,7 @@ export const LandingPage: React.FC = () => {
                       type="button"
                       aria-pressed={activeAsst === i}
                       onClick={() => handleSelectAsst(i)}
+                      title={`Switch to ${a.who}`}
                     >
                       <span className={`g g${i}`} />
                       {a.who}
@@ -479,6 +517,36 @@ export const LandingPage: React.FC = () => {
                 </button>
               </div>
 
+              {/* Assistant Feature Banner */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
+                  padding: '6px 14px',
+                  marginBottom: '10px',
+                  borderRadius: '6px',
+                  background: 'var(--blue-wash)',
+                  fontSize: '0.8125rem',
+                  color: 'var(--blue)'
+                }}
+              >
+                <span>
+                  <strong>{currentAnswer.who}:</strong> {currentAnswer.featureTag}
+                </span>
+                <Link
+                  to={`/verify?sample=${currentAnswer.targetSampleIndex}&assistant=${encodeURIComponent(currentAnswer.who)}`}
+                  style={{
+                    fontWeight: 600,
+                    textDecoration: 'underline',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Test in Workspace →
+                </Link>
+              </div>
+
               <div className="th-stats" aria-hidden="true">
                 <span>
                   Claims found <b key={`c-${counts.c}`} className="bump">{counts.c}</b>
@@ -494,9 +562,14 @@ export const LandingPage: React.FC = () => {
               <div className="th-stage" ref={stageRef}>
                 <div className="sheet th-doc">
                   <div className="th-doc-head">
-                    <span>
-                      Answer from <b>{ANSWERS[activeAsst]?.who || 'Assistant'}</b>
-                    </span>
+                    <div>
+                      <span>
+                        Answer from <b>{currentAnswer.who}</b>
+                      </span>
+                      <small style={{ display: 'block', fontSize: '0.75rem', color: 'var(--ink-2)' }}>
+                        {currentAnswer.featureDesc}
+                      </small>
+                    </div>
                     <span className="live" data-s={liveState}>
                       <i />
                       <span>{liveText}</span>
@@ -511,6 +584,78 @@ export const LandingPage: React.FC = () => {
           </div>
         </section>
       </div>
+
+      {/* Assistant Capability Showcase Section */}
+      <section className="wrap" style={{ padding: '60px 0 20px', borderTop: '1px solid var(--rule)' }}>
+        <h2 style={{ fontSize: 'clamp(1.8rem, 3.2vw, 2.4rem)', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '12px' }}>
+          Tailored Fact-Checking for Every AI Assistant
+        </h2>
+        <p style={{ color: 'var(--ink-2)', maxWidth: '64ch', marginBottom: '36px', fontSize: '1.0625rem' }}>
+          Different AI tools make different kinds of errors. Neural Proof provides specialized verifiers built for each source.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+          {/* Chat Assistant Card */}
+          <div className="sheet" style={{ padding: '28px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 10px', borderRadius: '999px', background: 'var(--blue-wash)', color: 'var(--blue)', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '16px' }}>
+              <span className="g g0" />
+              Chat Assistant Verification
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '8px' }}>Conversational Dialogue Proofing</h3>
+            <p style={{ color: 'var(--ink-2)', fontSize: '0.9375rem', lineHeight: 1.6, marginBottom: '18px' }}>
+              Chat models (ChatGPT, Claude, Gemini) sound fluent while hallucinating subtle technical details. Neural Proof splits fluid multi-sentence answers into atomic factual claims so false premises can't hide behind pleasant prose.
+            </p>
+            <ul style={{ margin: '0 0 20px', paddingLeft: '18px', color: 'var(--ink-2)', fontSize: '0.875rem', display: 'grid', gap: '6px' }}>
+              <li>Atomic claim extraction from conversational replies</li>
+              <li>Calculates claim confidence & consensus score</li>
+              <li>Detects false premises embedded in correct paragraphs</li>
+            </ul>
+            <Link className="btn sm" to="/verify?sample=1&assistant=Chat%20assistant">
+              Verify Chat Answer
+            </Link>
+          </div>
+
+          {/* Search Assistant Card */}
+          <div className="sheet" style={{ padding: '28px', borderColor: 'var(--blue)' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 10px', borderRadius: '999px', background: 'var(--blue-wash)', color: 'var(--blue)', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '16px' }}>
+              <span className="g g1" />
+              Search Assistant Grounding
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '8px' }}>Live Web & Citation Audit</h3>
+            <p style={{ color: 'var(--ink-2)', fontSize: '0.9375rem', lineHeight: 1.6, marginBottom: '18px' }}>
+              Search synthesizers (Perplexity, Google AI Overviews, Copilot) cite web links that often contradict their own summaries. Neural Proof uses TinyFish web scraping to read the cited pages in real time and verify citation integrity.
+            </p>
+            <ul style={{ margin: '0 0 20px', paddingLeft: '18px', color: 'var(--ink-2)', fontSize: '0.875rem', display: 'grid', gap: '6px' }}>
+              <li>Real-time web crawl verification via TinyFish agent</li>
+              <li>Detects fabricated or misattributed URLs</li>
+              <li>Resolves multi-source disagreements with conflict tags</li>
+            </ul>
+            <Link className="btn primary sm" to="/verify?sample=1&assistant=Search%20assistant">
+              Verify Search Overview
+            </Link>
+          </div>
+
+          {/* Writing Assistant Card */}
+          <div className="sheet" style={{ padding: '28px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 10px', borderRadius: '999px', background: 'var(--blue-wash)', color: 'var(--blue)', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '16px' }}>
+              <span className="g g2" />
+              Writing Assistant Auditing
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '8px' }}>Myth & Absolute Claim Detection</h3>
+            <p style={{ color: 'var(--ink-2)', fontSize: '0.9375rem', lineHeight: 1.6, marginBottom: '18px' }}>
+              Writing and marketing tools (Jasper, Copy.ai, long-form draft tools) repeat popular folklore and use overconfident absolute claims ("zero impact", "100%", "only"). Neural Proof audits prose and marks up manuscripts in blue pencil.
+            </p>
+            <ul style={{ margin: '0 0 20px', paddingLeft: '18px', color: 'var(--ink-2)', fontSize: '0.875rem', display: 'grid', gap: '6px' }}>
+              <li>Detects absolute words and folklore assertions</li>
+              <li>Interactive blue pencil manuscript markup</li>
+              <li>Peer-reviewed and encyclopedic sources attached</li>
+            </ul>
+            <Link className="btn sm" to="/verify?sample=0&assistant=Writing%20assistant">
+              Audit Draft Prose
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* How a check runs */}
       <section className="process wrap" aria-labelledby="howTitle">
