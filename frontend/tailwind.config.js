@@ -4,34 +4,46 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
-  darkMode: 'class',
+  darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        navy: {
-          950: '#070C18',
-          900: '#0A1020',
-          850: '#0F172A',
-          800: '#111827',
-          750: '#161F38',
-          700: '#1E293B',
-          600: '#334155',
+        paper: 'var(--paper)',
+        sheet: 'var(--sheet)',
+        ink: {
+          DEFAULT: 'var(--ink)',
+          2: 'var(--ink-2)',
         },
-        accent: {
-          cyan: '#22D3EE',
-          teal: '#14B8A6',
-          sky: '#38BDF8',
+        rule: 'var(--rule)',
+        blue: {
+          DEFAULT: 'var(--blue)',
+          wash: 'var(--blue-wash)',
+        },
+        ok: {
+          DEFAULT: 'var(--ok)',
+          wash: 'var(--ok-wash)',
+        },
+        mid: {
+          DEFAULT: 'var(--mid)',
+          wash: 'var(--mid-wash)',
+        },
+        bad: {
+          DEFAULT: 'var(--bad)',
+          wash: 'var(--bad-wash)',
         },
         verdict: {
-          supported: '#10B981',
-          contradicted: '#EF4444',
-          partial: '#F59E0B',
-          insufficient: '#64748B',
+          supported: 'var(--ok)',
+          contradicted: 'var(--bad)',
+          partial: 'var(--mid)',
+          insufficient: 'var(--ink-2)',
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        ui: ['"Bricolage Grotesque"', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['"Bricolage Grotesque"', 'system-ui', '-apple-system', 'sans-serif'],
+        doc: ['Newsreader', 'Georgia', 'serif'],
+        serif: ['Newsreader', 'Georgia', 'serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       }
     },
   },
