@@ -13,5 +13,6 @@ spring:
         hbm2ddl:
           auto: create
     show-sql: false
+    open-in-view: true
   flyway:
     enabled: false

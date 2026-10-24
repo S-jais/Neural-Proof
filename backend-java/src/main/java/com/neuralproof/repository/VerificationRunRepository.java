@@ -31,7 +31,7 @@ public interface VerificationRunRepository extends JpaRepository<VerificationRun
             @Param("since") Instant since
     );
 
-    // Watchdog: find runs that were stuck in a non-terminal state
-    @Query("SELECT r FROM VerificationRun r WHERE r.status IN ('QUEUED', 'EXTRACTING_CLAIMS', 'VERIFYING', 'FINALIZING') AND r.startedAt <= :cutoff")
-    List<VerificationRun> findStuckRuns(@Param("cutoff") Instant cutoff);
+    // Watchdog: find runs that are in a non-terminal active state
+    @Query("SELECT r FROM VerificationRun r WHERE r.status IN ('QUEUED', 'EXTRACTING_CLAIMS', 'VERIFYING', 'FINALIZING')")
+    List<VerificationRun> findActiveRuns();
 }

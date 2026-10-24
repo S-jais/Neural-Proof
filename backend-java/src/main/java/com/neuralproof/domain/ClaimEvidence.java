@@ -18,7 +18,7 @@ public class ClaimEvidence {
     @JoinColumn(name = "claim_id", nullable = false)
     private Claim claim;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "source_id", nullable = false)
     private EvidenceSource source;
 

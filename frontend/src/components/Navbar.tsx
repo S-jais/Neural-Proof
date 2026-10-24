@@ -24,12 +24,12 @@ export const Navbar: React.FC = () => {
       try {
         const res = await api.getHealth();
         setStatus({
-          tinyfishOk: res.tinyfish_configured,
-          llmOk: res.llm_configured,
+          tinyfishOk: res.tinyFish === 'CONFIGURED' || (res as any).tinyfish_configured === true,
+          llmOk: res.llm === 'CONFIGURED' || (res as any).llm_configured === true,
         });
       } catch {
         // Fallback status if offline
-        setStatus({ tinyfishOk: false, llmOk: true });
+        setStatus({ tinyfishOk: false, llmOk: false });
       }
     };
     checkHealth();

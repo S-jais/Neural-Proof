@@ -85,8 +85,7 @@ public class VerificationController {
             HttpServletResponse response
     ) {
         String sessionId = getSessionId(request, response);
-        VerificationRun run = runService.getRunForSession(id, sessionId);
-        return ResponseEntity.ok(runService.mapRunToDto(run));
+        return ResponseEntity.ok(runService.getRunDto(id, sessionId));
     }
 
     @GetMapping("/{id}/claims")

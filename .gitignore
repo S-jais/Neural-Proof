@@ -10,8 +10,13 @@ dist/
 
 # Environment files (NEVER commit secrets)
 .env
+**/.env
 .env.local
 .env.*.local
+*.env
+
+# Scratch and temporary scripts
+scratch/
 
 # Keep the example
 !.env.example

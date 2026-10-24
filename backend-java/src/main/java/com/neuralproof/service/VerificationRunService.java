@@ -161,6 +161,13 @@ public class VerificationRunService {
         return mapClaimToDto(claim);
     }
 
+    @Transactional(readOnly = true)
+    public VerificationResponse getRunDto(UUID id, String sessionId) {
+        VerificationRun run = getRunForSession(id, sessionId);
+        return mapRunToDto(run);
+    }
+
+    @Transactional(readOnly = true)
     public VerificationResponse mapRunToDto(VerificationRun run) {
         VerificationResponse resp = new VerificationResponse();
         resp.setId(run.getId());

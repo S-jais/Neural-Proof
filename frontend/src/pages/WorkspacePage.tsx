@@ -107,12 +107,12 @@ export const WorkspacePage: React.FC = () => {
     api.getHealth()
       .then((h) => {
         setHealthStatus({
-          tinyfish: h.tinyfish_configured,
-          llm: h.llm_configured
+          tinyfish: h.tinyFish === 'CONFIGURED' || (h as any).tinyfish_configured === true,
+          llm: h.llm === 'CONFIGURED' || (h as any).llm_configured === true
         });
       })
       .catch(() => {
-        setHealthStatus({ tinyfish: false, llm: true });
+        setHealthStatus({ tinyfish: false, llm: false });
       });
   }, []);
 

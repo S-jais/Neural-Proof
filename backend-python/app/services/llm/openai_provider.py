@@ -19,7 +19,7 @@ class OpenAIProvider(BaseLLMProvider):
     def __init__(self, api_key: str, model: str = "gpt-4o-mini"):
         from openai import AsyncOpenAI
 
-        self.client = AsyncOpenAI(api_key=api_key)
+        self.client = AsyncOpenAI(api_key=api_key, max_retries=0)
         self.model = model
 
     async def generate_text(

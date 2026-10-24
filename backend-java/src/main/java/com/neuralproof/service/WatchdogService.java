@@ -25,6 +25,8 @@ public class WatchdogService {
     @Value("${neural-proof.limits.run-total-timeout-seconds:480}")
     private int runTimeoutSeconds;
 
+    private final java.util.concurrent.ConcurrentMap<java.util.UUID, Instant> jobStartTimes = new java.util.concurrent.ConcurrentHashMap<>();
+
     public WatchdogService(VerificationRunRepository runRepository, VerificationRunService runService) {
         this.runRepository = runRepository;
         this.runService = runService;
@@ -37,14 +39,14 @@ public class WatchdogService {
     @Transactional
     public void recoverInterruptedRuns() {
         log.info("Watchdog: Checking for interrupted verification runs from previous execution...");
-        Instant cutoff = Instant.now().minusSeconds(10);
-        List<VerificationRun> interrupted = runRepository.findStuckRuns(cutoff);
-        for (VerificationRun run : interrupted) {
+        Instant now = Instant.now();
+        List<VerificationRun> active = runRepository.findActiveRuns();
+        for (VerificationRun run : active) {
             log.warn("Marking interrupted run {} as FAILED (error_code=INTERRUPTED)", run.getId());
             run.setStatus(RunStatus.FAILED);
             run.setErrorCode("INTERRUPTED");
             run.setErrorMessage("Server restart interrupted the verification pipeline. Completed claims preserved.");
-            run.setCompletedAt(Instant.now());
+            run.setCompletedAt(now);
             runRepository.save(run);
             runService.recordEvent(run, null, "WATCHDOG", "WARN", "Run marked FAILED due to process restart.");
         }
@@ -56,20 +58,25 @@ public class WatchdogService {
     @Scheduled(fixedRate = 30000) // Every 30 seconds
     @Transactional
     public void checkTimeouts() {
-        Instant cutoff = Instant.now().minusSeconds(runTimeoutSeconds);
-        List<VerificationRun> stuckRuns = runRepository.findStuckRuns(cutoff);
+        Instant now = Instant.now();
+        List<VerificationRun> activeRuns = runRepository.findActiveRuns();
 
-        for (VerificationRun run : stuckRuns) {
-            log.warn("Run {} exceeded total timeout limit ({}s). Ending as TIMED_OUT.", run.getId(), runTimeoutSeconds);
-            run.setStatus(RunStatus.TIMED_OUT);
-            run.setErrorCode("RUN_TIMEOUT");
-            run.setErrorMessage("Verification exceeded the total runtime limit (" + runTimeoutSeconds + "s).");
-            run.setCompletedAt(Instant.now());
-            if (run.getStartedAt() != null) {
-                run.setDurationMs(run.getCompletedAt().toEpochMilli() - run.getStartedAt().toEpochMilli());
+        for (VerificationRun run : activeRuns) {
+            Instant start = jobStartTimes.computeIfAbsent(run.getId(), k -> now);
+            long elapsedSeconds = java.time.Duration.between(start, now).getSeconds();
+            if (elapsedSeconds > runTimeoutSeconds) {
+                log.warn("Run {} exceeded total timeout limit ({}s). Ending as TIMED_OUT.", run.getId(), runTimeoutSeconds);
+                run.setStatus(RunStatus.TIMED_OUT);
+                run.setErrorCode("RUN_TIMEOUT");
+                run.setErrorMessage("Verification exceeded the total runtime limit (" + runTimeoutSeconds + "s).");
+                run.setCompletedAt(now);
+                if (run.getStartedAt() != null) {
+                    run.setDurationMs(run.getCompletedAt().toEpochMilli() - run.getStartedAt().toEpochMilli());
+                }
+                runRepository.save(run);
+                runService.recordEvent(run, null, "WATCHDOG", "ERROR", "Total run timeout exceeded.");
+                jobStartTimes.remove(run.getId());
             }
-            runRepository.save(run);
-            runService.recordEvent(run, null, "WATCHDOG", "ERROR", "Total run timeout exceeded.");
         }
     }
 }
